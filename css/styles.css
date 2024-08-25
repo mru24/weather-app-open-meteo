@@ -94,7 +94,7 @@ select {
   margin-top: 20px;
   span.wind-rose {
     display: block;
-    height: 35px;
+    height: 50px;
     span.arrow {
       font-size: 45px;
       position: absolute;
