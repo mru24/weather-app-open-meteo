@@ -2,6 +2,7 @@
   color-scheme: light dark;
   --light-blue: #2579c7;
   --dark-blue: #0f1b5f;
+  --light-red: #ff1f1f;
 }
 body {
   color: light-dark(#efefec,#293647);
@@ -35,17 +36,47 @@ h1 {
   margin: 5px 0 10px;
 }
 h2 {
-  font-size: 42px;
+  font-size: 30px;
   font-weight: normal;
   margin: 5px 0 10px;
 }
+h4 {
+  margin: 0;
+  font-size: 17px
+}
+h5 {
+  margin: 0;
+  font-size: 17px;
+}
 p {
-  margin: 0 0 5px;
+  margin: 0;
+  font-size: 14px;
+}
+.blue {
+  color: var(--light-blue);
+}
+.red {
+  color: var(--light-red);
 }
 hr {
   border: none;
   border-bottom: 2px solid rgba(255,255,255,0.3);
   margin: 5px 0;
+}
+.input-wrapper {
+  width: max-content;
+  margin: auto;
+  position: relative;
+  .input-clear {
+    position: absolute;
+    top: 0;
+    right: 4px;
+    z-index: 2;
+    color: #999;
+    font-size: 40px;
+    line-height: 45px;
+    cursor: pointer;
+  }
 }
 input[type="text"] {
   display: block;
@@ -95,9 +126,29 @@ select {
   span.wind-rose {
     display: block;
     height: 50px;
+    transform-origin: center;
+    padding-left: 20px;
     span.arrow {
-      font-size: 45px;
+      font-size: 40px;
       position: absolute;
+    }
+  }
+}
+#forecast {
+  .forecast.day {
+    span.wind-rose {
+      padding-left: 10px;
+      span.arrow {
+        font-size: 25px;
+      }
+    }
+  }
+  .forecast.hourly {
+    .wind-direction {
+      margin-top: -2px;
+      span.wind-rose {
+        padding-left: 25px;
+      }
     }
   }
 }

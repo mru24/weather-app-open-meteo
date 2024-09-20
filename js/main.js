@@ -8,7 +8,34 @@ const app = {
     this.document.on('click','.trigger',(e) => {
       this.jq(e.currentTarget).find('.hidden').slideToggle();
     })
+    this.inputClear = this.jq('.input-clear');
+    this.inputClear.on('click',(e)=>{
+      this.jq(e.currentTarget).prev('input').val('');
+    })
 
+    this.dayName = {
+      '0':'Sun',
+      '1':'Mon',
+      '2':'Tue',
+      '3':'Wed',
+      '4':'Thu',
+      '5':'Fri',
+      '6':'Sat'
+    }
+    this.monthName = {
+      '0':'Jan',
+      '1':'Feb',
+      '2':'Mar',
+      '3':'Apr',
+      '4':'May',
+      '5':'Jun',
+      '6':'Jul',
+      '7':'Aug',
+      '8':'Sep',
+      '9':'Oct',
+      '10':'Nov',
+      '11':'Dec'
+    }
     this.weatherCode = {
       "0":{
         "day":{
@@ -291,24 +318,19 @@ const app = {
         }
       }
     }
-
     this.geoSearch = this.jq('#geolocationSearch');
-
     this.geoSearch.on('keyup',(e) => { this.searchLocation(e); } );
     this.latitude = '';
     this.longitude = '';
     this.geolocationResult = this.jq('#geolocationResults');
     this.geolocationResult.on('change',(e) => { this.queryWeather(e); } );
-
     this.geolocationCall = "https://geocoding-api.open-meteo.com/v1/search?name=";
-    this.forecastCall = `https://api.open-meteo.com/v1/forecast?latitude=${this.latitude}&longitude=${this.longitude}&hourly=temperature_2m`;
-
   },
   async searchLocation(e) {
     let query = this.jq(e.currentTarget).val();
-    if(query.length > 3) {
+    if(query.length > 2) {
       this.response = await this.callApi(this.geolocationCall+query);
-      if(this.response.results.length > 0) await this.showSearchLocations(this.response.results);
+      if(this.response.results && this.response.results.length > 0) await this.showSearchLocations(this.response.results);
     }
   },
   async showSearchLocations(locations) {
@@ -328,10 +350,7 @@ const app = {
     let timezone = coords[2];
 
     if(latitude && longitude && timezone) {
-      this.response = await this.callApi(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum,rain_sum,showers_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant&hourly=temperature_2m,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,surface_pressure,cloud_cover,is_day&timezone=${timezone}&forecast_days=16`);
-
-      // '&hourly=temperature_2m,precipitation,rain,showers,snowfall,snow_depth,weather_code,surface_pressure,visibility,wind_speed_10m,wind_direction_10m,wind_gusts_10m';
-      // '&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum,rain_sum,showers_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant';
+      this.response = await this.callApi(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_sum,rain_sum,showers_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant&hourly=temperature_2m,precipitation_probability,precipitation,rain,showers,snowfall,snow_depth,weather_code,surface_pressure,cloud_cover,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day&timezone=${timezone}&forecast_days=16`);
 
       if(this.response) {
         await this.showWeather(this.response);
@@ -354,7 +373,7 @@ const app = {
           html += `<img src="${data.current.is_day=1?this.weatherCode[data.current.weather_code]['day']['image']:this.weatherCode[data.current.weather_code]['night']['image']}" />`;
         html += '</div>';
 
-        html += '<div class="col" style="padding-top:18px;">';
+        html += '<div class="col" style="padding-top:25px;">';
           html += `<h2>${data.current.temperature_2m+data.current_units.temperature_2m}</h2>`;
         html += '</div>';
 
@@ -376,107 +395,132 @@ const app = {
 
       html += '<div class="hidden">';
         html += '<hr>';
-        html += '<p>some text...</p>';
+        html += '<p>current data...</p>';
       html += '</div>';
     html += '</div>';
 
     html += '<div class="forecast day trigger">';
     let d = new Date(data.current.time.slice(0,-6));
     let day = d.getDay();
-    html += '<div class="row">';
-      html += '<div class="col">';
-        html += `<p>Today</p><p>${await this.getDayName(day)}</p>`;
-      html += '</div>';
-
-    html += '</div>';
-    html += '<div class="hidden">';
-    data.hourly.time.forEach((e,i)=>{
-      let time = e.split('T');
-      let hours = time[1].split(':');
-      let date = new Date();
-      let hoursNow = date.getHours().toString().padStart(2,'0');
-      let monthNow = date.getMonth()+1;
-      let dateNow = date.getFullYear()+'-'+monthNow.toString().padStart(2,'0')+'-'+date.getDate().toString().padStart(2,'0');
-
-      if(time[0] <= dateNow && hours[0] <= hoursNow-1) return;
-
-      if(data.hourly.time[i].slice(0,-6)!=data.hourly.time[i-1].slice(0,-6)) {
-          html += '</div>';
+      html += '<div class="row">';
+        html += '<div class="col" style="min-width:100px;max-width:120px;">';
+          html += '<h4>Today</h4>'
+          html += `<p>${this.dayName[day]}</p>`;
         html += '</div>';
+        html += '<div class="col" style="max-width:60px;">';
+          html += `<img src="${data.current.is_day=1?this.weatherCode[data.daily.weather_code[0]]['day']['image']:this.weatherCode[data.daily.weather_code[0]]['night']['image']}" width="40" height="40" />`;
+        html += '</div>';
+        html += '<div class="col" style="min-width:115px;max-width:125px;padding-top:8px;">';
+          html += `<h4><span class="red">${data.daily.temperature_2m_max[0]}&deg;</span> / <span class="blue">${data.daily.temperature_2m_min[0]}&deg</span></h4>`;
+        html += '</div>';
+        html += '<div class="col" style="max-width:75px;">';
+          html += '<p class="wind-direction" style="margin-top:2px;">';
+            html += '<span class="wind-rose">';
+              html += `<span class="arrow" style="transform:rotate(${data.daily.wind_direction_10m_dominant[0]}deg)">&#8595;</span>`;
+            html += `</span>`;
+          html += `</p>`;
+        html += '</div>';
+        html += '<div class="col" style="padding-top:8px;">';
+          html += `<p>${data.daily.wind_speed_10m_max[0]}<br>${data.daily.wind_gusts_10m_max[0]}<br>${data.daily_units.wind_speed_10m_max}</p>`;
+        html += '</div>';
+      html += '</div>';
+      html += '<hr>';
+      html += '<div class="hidden">';
+        let currentD = data.current.time.split('T');
+        let currentDate = currentD[0];
+        let currentTime = currentD[1];
+        data.hourly.time.forEach((e0,i) => {
+          let hourlyD = e0.split('T');
+          if(hourlyD[0] == currentDate && hourlyD[1] >= currentTime) {
+            html += this.displayHourlyData(hourlyD[1],data,i);
+          }
+        })
+      html += '</div>';
+    html += '</div>';
+
+    data.daily.time.forEach((e,i) => {
+      let d = new Date();
+      let monthNow = d.getMonth()+1;
+      let dateNow = d.getFullYear()+'-'+monthNow.toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');
+
+      if(e > dateNow) {
+        let d = new Date(e);
+        let weekDay = d.getDay();
+        let day = d.getDate().toString().padStart(2,'0');
+        let month = this.monthName[d.getMonth()];
         html += '<div class="forecast day trigger">';
+        if(i==1) {
           html += '<div class="row">';
-            html += '<div class="col">';
-              html += data.hourly.time[i].slice(0,-6);
+            html += '<div class="col" style="min-width:100px;max-width:120px;">';
+              html += '<h4>Tomorrow</h>';
+              html += `<p>${day} ${month}</p>`;
+            html += '</div>';
+            html += '<div class="col" style="max-width:60px;">';
+              html += `<img src="${data.current.is_day=1?this.weatherCode[data.daily.weather_code[1]]['day']['image']:this.weatherCode[data.daily.weather_code[1]]['night']['image']}" width="40" height="40" />`;
+            html += '</div>';
+            html += '<div class="col" style="min-width:115px;max-width:125px;padding-top:8px;">';
+              html += `<h4><span class="red">${data.daily.temperature_2m_max[1]}&deg;</span> / <span class="blue">${data.daily.temperature_2m_min[1]}&deg</span></h4>`;
+            html += '</div>';
+            html += '<div class="col" style="max-width:75px;">';
+              html += '<p class="wind-direction" style="margin-top:2px;">';
+                html += '<span class="wind-rose">';
+                  html += `<span class="arrow" style="transform:rotate(${data.daily.wind_direction_10m_dominant[1]}deg)">&#8595;</span>`;
+                html += `</span>`;
+              html += `</p>`;
+            html += '</div>';
+            html += '<div class="col" style="padding-top:8px;">';
+              html += `<p>${data.daily.wind_speed_10m_max[1]}<br>${data.daily.wind_gusts_10m_max[1]}<br>${data.daily_units.wind_speed_10m_max}</p>`;
             html += '</div>';
           html += '</div>';
+          html += '<hr>';
           html += '<div class="hidden">';
-      }
-            html += '<div class="row">';
-              html += '<div class="col">';
-                html += '<div class="forecast time">';
-                  html += time[1];
-                html += '</div>';
-              html += '</div>';
-
-              html += '<div class="col">';
-                html += `<img src="${data.hourly.is_day[i]=1?this.weatherCode[data.hourly.weather_code[i]]['day']['image']:this.weatherCode[data.hourly.weather_code[i]]['night']['image']}" width="40" height="40" style="margin-top:-10px;" />`;
-              html += '</div>';
-
-              html += `<div class="col rain-${data.hourly.rain[i]} showers-${data.hourly.showers[i]}">`;
-              if(data.hourly.rain[i]>0 || data.hourly.showers[i]>0) {
-                if(data.hourly.rain[i]>data.hourly.showers[i]) {
-                  html += '<img src="img/rain.svg" width="30" />';
-                } else if(data.hourly.rain[i]<data.hourly.showers[i]) {
-                  html += '<img src="img/showers.svg" width="30" />';
-                } else {
-                  html += '<img src="img/rain.svg" width="30" />';
-                }
+            data.hourly.time.forEach((e1,i) => {
+              let hourlyD = e1.split('T');
+              if(hourlyD[0] == e) {
+                html += this.displayHourlyData(hourlyD[1],data,i);
               }
-              html += '</div>';
-              html += '<div class="col">';
-                if(data.hourly.precipitation[i]>0) {
-                  html += data.hourly.precipitation[i]+data.current_units.precipitation;
-                }
-              html += '</div>';
-              html += '<div class="col">';
-                html += data.hourly.temperature_2m[i]+data.current_units.temperature_2m;
-              html += '</div>';
+            })
+          html += '</div>';
+        } else if(i>1) {
+          html += '<div class="row">';
+            html += '<div class="col" style="min-width:100px;max-width:120px;">';
+              html += `<h4>${this.dayName[weekDay]}</h4>`;
+              html += `<p>${day} ${month}</p>`;
             html += '</div>';
+            html += '<div class="col" style="max-width:60px;">';
+              html += `<img src="${data.current.is_day=1?this.weatherCode[data.daily.weather_code[i]]['day']['image']:this.weatherCode[data.daily.weather_code[i]]['night']['image']}" width="40" height="40" />`;
+            html += '</div>';
+            html += '<div class="col" style="min-width:115px;max-width:125px;padding-top:8px;">';
+              html += `<h4><span class="red">${data.daily.temperature_2m_max[i]}&deg;</span> / <span class="blue">${data.daily.temperature_2m_min[i]}&deg</span></h4>`;
+            html += '</div>';
+            html += '<div class="col" style="max-width:75px;">';
+              html += '<p class="wind-direction" style="margin-top:2px;">';
+                html += '<span class="wind-rose">';
+                  html += `<span class="arrow" style="transform:rotate(${data.daily.wind_direction_10m_dominant[i]}deg)">&#8595;</span>`;
+                html += `</span>`;
+              html += `</p>`;
+            html += '</div>';
+            html += '<div class="col" style="padding-top:8px;">';
+              html += `<p>${data.daily.wind_speed_10m_max[i]}<br>${data.daily.wind_gusts_10m_max[i]}<br>${data.daily_units.wind_speed_10m_max}</p>`;
+            html += '</div>';
+          html += '</div>';
+          html += '<hr>';
+          html += '<div class="hidden">';
+          data.hourly.time.forEach((e1,i) => {
+            let hourlyD = e1.split('T');
+            if(hourlyD[0] == e) {
+              html += this.displayHourlyData(hourlyD[1],data,i);
+            }
+          })
+          html += '</div>';
+        }
+        html += '</div>';
+      }
     })
-
     html += '</div>';
     this.jq('#forecast').html(html);
   },
-  async getDayName(day) {
-    let dayName = '';
-    switch (day) {
-      case 0:
-        dayName = 'Sun';
-        break;
-      case 1:
-        dayName = 'Mon';
-        break;
-      case 2:
-        dayName = 'Tue';
-        break;
-      case 3:
-        dayName = 'Wed';
-        break;
-      case 4:
-        dayName = 'Thu';
-        break;
-      case 5:
-        dayName = 'Fri';
-        break;
-      case 6:
-        dayName = 'Sat';
-        break;
 
-      default:
-        break;
-    }
-    return dayName;
-  },
   async callApi(url) {
     const options = {
       method: 'GET'
@@ -489,6 +533,34 @@ const app = {
     } catch (error) {
         console.error(error);
     }
+  },
+
+  displayHourlyData(time,data,i) {
+    html = '';
+    html += '<div class="forecast hourly">';
+      html += '<div class="row">';
+        html += '<div class="col" style="max-width:80px;">';
+          html += `<p>${time}</p>`;
+        html += '</div>';
+        html += '<div class="col"  style="max-width:80px;margin-top:-12px;">';
+          html += `<img src="${data.hourly.is_day[i]=1?this.weatherCode[data.hourly.weather_code[i]]['day']['image']:this.weatherCode[data.hourly.weather_code[i]]['night']['image']}" width="40" height="40" />`;
+        html += '</div>';
+        html += '<div class="col" style="max-width:50px;">';
+          html += `<p>${data.hourly.temperature_2m[i]}&deg;</p>`;
+        html += '</div>';
+        html += '<div class="col">';
+          html += '<p class="wind-direction">';
+            html += '<span class="wind-rose">';
+              html += `<span class="arrow" style="transform:rotate(${data.hourly.wind_direction_10m[i]}deg)">&#8595;</span>`;
+            html += `</span>`;
+          html += `</p>`;
+        html += '</div>';
+        html += '<div class="col">';
+          html += `<p>${data.hourly.wind_speed_10m[i]} - ${data.hourly.wind_gusts_10m[i]} ${data.hourly_units.wind_speed_10m}</p>`;
+        html += '</div>';
+      html += '</div>';
+    html += '</div>';
+    return html;
   }
 }
 app.init();
