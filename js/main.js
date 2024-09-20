@@ -563,4 +563,10 @@ const app = {
     return html;
   }
 }
+
+document.addEventListener("deviceready", onDeviceReady, false);
+function onDeviceReady() {
+    // app.init();
+}
+
 app.init();
